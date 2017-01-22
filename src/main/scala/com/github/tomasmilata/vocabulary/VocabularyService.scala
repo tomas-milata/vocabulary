@@ -6,13 +6,14 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class VocabularyService {
 
-  this: ExecutionContextProvider =>
+  this: ExecutionContextProvider with ReminderServiceProvider =>
 
   val storage = new Storage with GlobalConfigModule with ExecutionContextProvider {
     override implicit def executionContext: ExecutionContext = VocabularyService.this.executionContext
   }
 
   def add(vocabulary: Vocabulary): Future[Unit] = Future {
-    storage.add(vocabulary)
+    val reminders = reminderService.createSchedule(vocabulary)
+    storage.add(reminders)
   }
 }
