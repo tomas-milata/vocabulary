@@ -6,8 +6,10 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.ExceptionHandler
 import akka.stream.ActorMaterializer
-import com.github.tomasmilata.vocabulary.Model.Vocabulary
+import com.github.tomasmilata.vocabulary.Model.{Phrase, Vocabulary}
 import com.typesafe.scalalogging.StrictLogging
+
+import scala.concurrent.ExecutionContext
 
 object API extends App with StrictLogging {
 
@@ -17,9 +19,13 @@ object API extends App with StrictLogging {
   implicit val materializer = ActorMaterializer()
   implicit val executionContext = system.dispatcher
 
-  private val service = new VocabularyService with ExecutionContextProvider with ReminderServiceProvider {
+  private val vocabularyService = new VocabularyService with ExecutionContextProvider with ReminderServiceProvider {
     override val executionContext = API.this.executionContext
     override val reminderService = new ReminderService
+  }
+
+  private val translationService = new TranslationService with ExecutionContextProvider {
+    override implicit def executionContext: ExecutionContext = API.this.executionContext
   }
 
   implicit def myExceptionHandler: ExceptionHandler =
@@ -35,9 +41,16 @@ object API extends App with StrictLogging {
     path("vocabulary") {
       post {
         entity(as[Vocabulary]) { vocabulary =>
-          onSuccess(service add vocabulary) {
+          onSuccess(vocabularyService add vocabulary) {
             complete(StatusCodes.Created)
           }
+        }
+      }
+    } ~ path("translation") {
+      get {
+        parameter("phrase") { phrase =>
+          val toLanguage = "ces"
+          complete(translationService.translate(Phrase(phrase, "eng"), toLanguage))
         }
       }
     }
