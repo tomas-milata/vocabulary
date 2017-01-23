@@ -32,3 +32,4 @@ project/plugins/project/
 .ensime_cache/
 .ensime
 
+/src/main/resources/application-local.conf

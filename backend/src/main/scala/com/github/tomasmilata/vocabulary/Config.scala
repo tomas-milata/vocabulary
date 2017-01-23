@@ -10,6 +10,19 @@ class Config {
       val string: String = root.getString("mongo.connection.string")
     }
   }
+
+  object email {
+    object service {
+      private val service = root.getConfig("email.service")
+      val URI: String = service.getString("URI")
+      object auth {
+        val credentials: String = service.getString("auth.credentials")
+      }
+      object message {
+        val from: String = service.getString("message.from")
+      }
+    }
+  }
 }
 
 object GlobalConfig {
