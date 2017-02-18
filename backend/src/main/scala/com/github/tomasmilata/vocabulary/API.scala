@@ -19,13 +19,29 @@ object API extends App with StrictLogging {
   implicit val materializer = ActorMaterializer()
   implicit val executionContext = system.dispatcher
 
-  private val vocabularyService = new VocabularyService with ExecutionContextProvider with ReminderServiceProvider {
+  private val reminderService = new ReminderService with StorageProvider with ExecutionContextProvider {
+    override def storage: Storage = API.this.storage
+    override implicit def executionContext: ExecutionContext = API.this.executionContext
+  }
+
+  private val storage = new Storage with GlobalConfigModule with ExecutionContextProvider {
+    override implicit def executionContext: ExecutionContext = API.this.executionContext
+  }
+
+  private val vocabularyService = new VocabularyService with ExecutionContextProvider with ReminderServiceProvider with StorageProvider {
     override val executionContext = API.this.executionContext
-    override val reminderService = new ReminderService
+    override val reminderService = API.this.reminderService
+    override def storage: Storage = API.this.storage
   }
 
   private val translationService = new TranslationService with ExecutionContextProvider {
     override implicit def executionContext: ExecutionContext = API.this.executionContext
+  }
+
+  private val scheduler = new Scheduler with ExecutionContextProvider with ActorSystemProvider with ReminderServiceProvider {
+    override implicit def executionContext: ExecutionContext = API.this.executionContext
+    override implicit def system: ActorSystem = API.this.system
+    override def reminderService: ReminderService = API.this.reminderService
   }
 
   implicit def myExceptionHandler: ExceptionHandler =
@@ -51,6 +67,16 @@ object API extends App with StrictLogging {
         parameter("phrase") { phrase =>
           val toLanguage = "ces"
           complete(translationService.translate(Phrase(phrase, "eng"), toLanguage))
+        }
+      }
+    } ~ path("") {
+      encodeResponse {
+        getFromResource("static-web/index.html")
+      }
+    } ~ path("static" / Remaining) { path =>
+      get {
+        encodeResponse {
+          getFromResource(s"static-web/$path")
         }
       }
     }

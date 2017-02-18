@@ -1,7 +1,7 @@
 package com.github.tomasmilata.vocabulary
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import com.github.tomasmilata.vocabulary.Model.{Phrase, Translation, Vocabulary}
+import com.github.tomasmilata.vocabulary.Model.{Phrase, Reminder, Translation, Vocabulary}
 import spray.json.DefaultJsonProtocol
 
 object JsonFormats extends SprayJsonSupport with DefaultJsonProtocol {
